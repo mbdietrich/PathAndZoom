@@ -102,13 +102,17 @@
                 g.transition().duration(750).attr("transform", "scale(0.85)");
                 start = [width / 2, height / 2, height/0.85]
             }
+            
+            function goToLoc(index){
+                click(countries[index]);
+            }
 
         </script>
         
         <div class = "control">
             <table>
                 <tr><td>Select a country ID (0-246):</td></tr>
-                <tr><td></td><td></td></tr>
+                <tr><td><input type="number" min="0" max="246" value="0" name="ind" id="ind"></input></td><td><input type="Submit" value="Go!" onclick="goToLoc(document.getElementById('ind').value);"></input></td></tr>
             </table>
         </div>
     </body>
