@@ -1,0 +1,30 @@
+.feature {
+    fill: orange;
+    stroke: black;
+    stroke-width: .5px;
+    stroke-linejoin: round;
+}
+
+.feature.active {
+    fill: blue;
+    stroke: black;
+    stroke-width: .5px;
+    stroke-linejoin: round;
+}
+
+.map {
+    position: absolute;
+    width: 70%;
+    height: 95%;
+    top: 3px;
+}
+
+.control {
+    position: fixed;
+    left: 72%;
+    top: 3px;
+    width: 25%;
+    height: 95%;
+    background-color: #cff;
+    
+}
