@@ -39,24 +39,42 @@
 
             var g = svg.append("g");
 
-            var countries;
+            var countries, cities;
 
-            d3.json("data/world-50m.json", function(error, topo) {
+            console.log(path);
 
-                countries = topojson.feature(topo, topo.objects.countries).features
+            d3.json("data/ne_110m_topo.json", function(error, topo) {
 
+                //countries = topojson.feature(topo, topo.features.geometry).features;
+                countries = topo.features;
                 g.selectAll("path")
-                        .data(countries)
+                        .datum(countries)
                         .enter().append("path")
                         .attr("d", path)
                         .attr("class", "feature")
+                        .attr("id", function(d, i) {
+                            return "topo" + i;
+                        })
                         .on("click", click);
             });
+            
+            d3.json("data/ne_110m_cities.json", function(error, topo) {
 
+                //countries = topojson.feature(topo, topo.features.geometry).features;
+                cities = topo.features;
+                g.selectAll("path")
+                        .data(cities)
+                        .enter().append("path")
+                        .attr("d", path)
+                        .attr("class", "city")
+                        .attr("id", function(d, i) {
+                            return "city" + i;
+                        });
+            });
 
             var start = [width / 2, height / 2, height / 0.85], end = [width / 2, height / 2, height / 0.85];
 
-            function click(d){
+            function click(d) {
                 move(d);
             }
 
@@ -86,7 +104,9 @@
 
                 function highlight() {
                     g.selectAll(".active").classed("active", false);
-                    g.classed("active", active = d);
+                    active = d;
+                    g.selectAll("#topo" + countries.indexOf(d)).classed("active", true);
+                    console.log(countries.indexOf(d));
                 }
 
                 g.attr("transform", transform(start))
@@ -98,7 +118,7 @@
                                 return transform(i(t));
                             };
                         })
-                                .each("end", callback);
+                        .each("end", callback);
                 start = [x, y, scale];
 
 
@@ -141,14 +161,14 @@
                     transitionList.splice(loc, 1);
                 }
                 var pathList = document.getElementById('pathList');
-                if(pathList.options.length > 0){
+                if (pathList.options.length > 0) {
                     pathList.remove(pathList.options.selectedIndex);
                 }
 
             }
 
             function FollowPath(index) {
-                console.log("Now moving to Country #"+countries.indexOf(transitionList[index]));
+                console.log("Now moving to Country #" + countries.indexOf(transitionList[index]));
                 if (transitionList.length > index) {
                     move(transitionList[index], function() {
                         FollowPath(index + 1);
@@ -164,7 +184,7 @@
 
         <div class = "control">
             <table>
-                <tr><td>Select a country ID (0-246):</td></tr>
+                <tr><td>Select a country ID (0-175):</td></tr>
                 <tr><td><input type="number" min="0" max="246" value="0" name="ind" id="ind"></input></td></tr>
                 <tr><td><select id="pathList" size="10"></td></tr>
                 <tr>
