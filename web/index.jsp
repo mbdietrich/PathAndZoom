@@ -6,9 +6,6 @@
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
-<style>
-
-</style>
 <html>
     <head>
         <meta charset="utf-8">

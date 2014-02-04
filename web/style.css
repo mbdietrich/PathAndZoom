@@ -34,5 +34,5 @@
 }
 
 .city.hidden{
-    display: none;
+    visibility: hidden;
 }
