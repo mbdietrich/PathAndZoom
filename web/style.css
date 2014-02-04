@@ -28,3 +28,11 @@
     background-color: #cff;
     
 }
+
+.city{
+    fill: red;
+}
+
+.city.hidden{
+    display: none;
+}

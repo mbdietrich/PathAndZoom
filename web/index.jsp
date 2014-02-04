@@ -22,33 +22,54 @@
             var width = 800,
                     height = 640,
                     active;
+            
+            //Zoom threshold after which to display features
+            var CITY_THRESHOLD = 5;
 
-            var scaleFactor = 1600;
+            //How far we should scale into a selection
+            var SCALE_FACTOR = 1600;
 
-            var speed = 2;
+            //How fast we should zoom. Lower numbers zoom faster.
+            var ANIMATION_DELAY = 3;
 
             var projection = d3.geo.mercator();
 
             var path = d3.geo.path()
-                    .projection(projection);
+                    .projection(projection)
+                    .pointRadius(0.5);
 
             var svg = d3.select("body").append("svg")
-                    //.attr("width", width)
-                    //.attr("height", height)
                     .attr("class", "map");
 
             var g = svg.append("g");
+
+            var showCities = false;
 
             var countries, cities;
 
             console.log(path);
 
+            
+            d3.json("data/ne_110m_cities.json", function(error, topo) {
+
+                //countries = topojson.feature(topo, topo.features.geometry).features;
+                cities = topo.features;
+                g.append("g").attr("order", 0).selectAll("path")
+                        .data(cities)
+                        .enter().append("path")
+                        .attr("d", path)
+                        .attr("class", "city hidden")
+                        .attr("id", function(d, i) {
+                            return "city" + i;
+                        });
+            });
+            
             d3.json("data/ne_110m_topo.json", function(error, topo) {
 
                 //countries = topojson.feature(topo, topo.features.geometry).features;
                 countries = topo.features;
-                g.selectAll("path")
-                        .datum(countries)
+                g.insert("g", "g").attr("order", 1).selectAll("path")
+                        .data(countries)
                         .enter().append("path")
                         .attr("d", path)
                         .attr("class", "feature")
@@ -58,19 +79,6 @@
                         .on("click", click);
             });
             
-            d3.json("data/ne_110m_cities.json", function(error, topo) {
-
-                //countries = topojson.feature(topo, topo.features.geometry).features;
-                cities = topo.features;
-                g.selectAll("path")
-                        .data(cities)
-                        .enter().append("path")
-                        .attr("d", path)
-                        .attr("class", "city")
-                        .attr("id", function(d, i) {
-                            return "city" + i;
-                        });
-            });
 
             var start = [width / 2, height / 2, height / 0.85], end = [width / 2, height / 2, height / 0.85];
 
@@ -89,8 +97,7 @@
                 var center = projection.translate();
                 var x = (((b[1][0] + b[0][0]) / 2)),
                         y = (((b[1][1] + b[0][1]) / 2)),
-                        //TODO rework scale.
-                        scale = scaleFactor / Math.max(width / (b[1][0] - b[0][0]), height / (b[1][1] - b[0][1]));
+                        scale = SCALE_FACTOR / Math.max(width / (b[1][0] - b[0][0]), height / (b[1][1] - b[0][1]));
 
                 end[0] = x;
                 end[1] = y;
@@ -112,7 +119,7 @@
                 g.attr("transform", transform(start))
                         .transition()
                         .delay(250)
-                        .duration(i.duration * speed)
+                        .duration(i.duration * ANIMATION_DELAY)
                         .attrTween("transform", function() {
                             return function(t) {
                                 return transform(i(t));
@@ -124,17 +131,33 @@
 
 
                 function transform(p) {
-                    //It appears k is the width of the selection we want to end with.
+                    //k is the width of the selection we want to end with.
                     var k = height / p[2];
+                    
+                    if(k>=CITY_THRESHOLD && !showCities){
+                        //Display cities
+                        showCities = true;
+                        g.selectAll(".city").classed("hidden", false);
+                        
+                    }
+                    else if(k<CITY_THRESHOLD && showCities){
+                        //Hide cities
+                        showCities = false;
+                        g.selectAll(".city").classed("hidden", true);
+                    }
+                    
                     return "translate(" + (center[0] - p[0] * k) + "," + (center[1] - p[1] * k) + ")scale(" + k + ")";
                 }
             }
+
 
 
             function reset() {
                 g.selectAll(".active").classed("active", active = false);
                 g.transition().duration(750).attr("transform", "scale(0.85)");
                 start = [width / 2, height / 2, height / 0.85]
+                showCities = false;
+                g.selectAll(".city").classed("hidden", true);
             }
 
             function goToLoc(index) {
@@ -179,6 +202,10 @@
 
             function getSelected(elem) {
                 return elem.options[elem.selectedIndex].value;
+            }
+            
+            window.onload = function(){
+                g.selectAll("g").sort(function(a, b){a.order-b.order});
             }
         </script>
 
