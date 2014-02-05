@@ -1,13 +1,13 @@
 .feature {
     fill: orange;
-    stroke: black;
+    stroke: #333;
     stroke-width: .5px;
     stroke-linejoin: round;
 }
 
 .feature.active {
     fill: blue;
-    stroke: black;
+    stroke: #333;
     stroke-width: .5px;
     stroke-linejoin: round;
 }
@@ -17,6 +17,7 @@
     width: 70%;
     height: 95%;
     top: 3px;
+    background: #bef;
 }
 
 .control {
@@ -25,8 +26,8 @@
     top: 3px;
     width: 25%;
     height: 95%;
-    background-color: #cff;
-    
+    background-color: #ccc;
+
 }
 
 .city{
@@ -34,5 +35,34 @@
 }
 
 .city.hidden{
-    visibility: hidden;
+    display: none;
 }
+
+div.items div:not(:target) {display: none}
+div.items div:target {display: block}
+
+.tab{
+    font: bold 13px;
+    font-decoration: none;
+    background-color: #EEEEEE;
+    color: #333;
+    padding: 2px 6px 2px 6px;
+    border-top: 1px solid #CCCCCC;
+    border-right: 1px solid #333333;
+    border-bottom: 1px solid #333333;
+    border-left: 1px solid #CCCCCC;
+}
+
+.country-label {
+    fill: #777;
+    fill-opacity: 0.7;
+    font-weight: 300;
+    display: none;
+}
+
+    .city-label{
+        fill: black;
+        font-weight: 100;
+        font-size: 3px;
+        display: none;
+    }

@@ -15,16 +15,51 @@
         <script src="http://d3js.org/topojson.v1.js"></script>
     </head>
     <body>
+
+
+        <div class = "control">
+
+            <p>
+                <a href="#item1" class = "tab">Navigate Countries</a>
+                <a href="#item2" class = "tab">Data</a>
+
+            <div class="items">
+                <div id="item1"><table>
+                        <tr><td>Select a country:</td></tr>
+                        <tr><td><select id="countryList"></td></tr>
+
+                        <td><input type="Submit" value="Go to Country" onclick="goToLoc(document.getElementById('countryList').value);"></input></td>
+                        <tr><td><select id="pathList" size="10"></td></tr>
+                        <tr>
+                            <td><input type="Submit" value="Add to Path" onclick="addToPath(document.getElementById('countryList').value);"></input></td>
+                            <td><input type="Submit" value="Remove selected from Path" onclick="removeFromPath(getSelected(document.getElementById('pathList')));"></input></td>
+                        </tr><tr>
+                            <td><input type="Submit" value="Follow Path" onclick="FollowPath(0);"></input></td>
+                        </tr>
+                    </table>
+                </div>
+                <div id="item2">
+                    TODO Data table
+                </div>
+            </div>
+
+            <table>
+            </table>
+        </div>
+
         <script>
             var width = 800,
                     height = 640,
                     active;
-            
+
             //Zoom threshold after which to display features
             var CITY_THRESHOLD = 5;
 
             //How far we should scale into a selection
             var SCALE_FACTOR = 1600;
+
+            //Scale factor of fonts
+            var FONT_SCALE = 0.1;
 
             //How fast we should zoom. Lower numbers zoom faster.
             var ANIMATION_DELAY = 3;
@@ -46,10 +81,9 @@
 
             console.log(path);
 
-            
+
             d3.json("data/ne_110m_cities.json", function(error, topo) {
 
-                //countries = topojson.feature(topo, topo.features.geometry).features;
                 cities = topo.features;
                 g.append("g").attr("order", 0).selectAll("path")
                         .data(cities)
@@ -58,13 +92,38 @@
                         .attr("class", "city hidden")
                         .attr("id", function(d, i) {
                             return "city" + i;
+                        })
+                        .on("mouseover", function(d) {
+                            var label = g.select('.' + d.properties.NAME);
+                            label.style("display", "block");
+
+                        })
+                        .on("mouseout", function(d) {
+                            var label = g.select('.' + d.properties.NAME);
+                            label.style("display", "none");
                         });
+
+                //Labels
+                g.selectAll(".city-label")
+                        .data(cities)
+                        .enter().append("text")
+                        .attr("class", function(d) {
+                            return "city-label " + d.properties.NAME;
+                        })
+                        .attr("transform", function(d) {
+                            return "translate(" + path.centroid(d) + ")";
+                        })
+                        .attr("dy", "0.35em")
+                        .text(function(d) {
+                            return d.properties.NAME;
+                        });
+
             });
-            
+
             d3.json("data/ne_110m_topo.json", function(error, topo) {
 
-                //countries = topojson.feature(topo, topo.features.geometry).features;
                 countries = topo.features;
+
                 g.insert("g", "g").attr("order", 1).selectAll("path")
                         .data(countries)
                         .enter().append("path")
@@ -73,19 +132,65 @@
                         .attr("id", function(d, i) {
                             return "topo" + i;
                         })
-                        .on("click", click);
+                        .on("click", clickCountry)
+                        .on("mouseover", function(d) {
+                            if (showCities) {
+                                var label = g.select('.' + d.properties.name);
+                                label.style("display", "block");
+                            }
+
+                        })
+                        .on("mouseout", function(d) {
+                            var label = g.select('.' + d.properties.name);
+                            label.style("display", "none");
+                        });
+
+                //Populate country selector
+                for (var i = 0; i < countries.length; i++) {
+                    var entry = document.createElement("option");
+                    entry.text = countries[i].properties.name;
+                    entry.value = i;
+                    document.getElementById("countryList").appendChild(entry);
+                }
+
+                //Labels
+                g.selectAll(".country-label")
+                        .data(countries)
+                        .enter().append("text")
+                        .attr("class", function(d) {
+                            return "country-label " + d.properties.name;
+                        })
+                        .attr("transform", function(d) {
+                            return "translate(" + path.centroid(d) + ")";
+                        })
+                        .attr("dx", function(d) {
+                            return '-' + (d.properties.name.length / 4) + "em";
+                        })
+                        .style("font-size", function(d) {
+                            var b = path.bounds(d);
+                            var width = b[1][0] - b[0][0];
+                            return width * FONT_SCALE + "px";
+                        })
+                        .text(function(d) {
+                            return d.properties.name;
+                        });
             });
-            
+
 
             var start = [width / 2, height / 2, height / 0.85], end = [width / 2, height / 2, height / 0.85];
 
-            function click(d) {
+            function clickCountry(d) {
                 move(d);
             }
 
-            function move(d, callback) {
+            function move(d, cb) {
 
-                callback = typeof callback !== 'undefined' ? callback : highlight;
+                callback = function() {
+                    highlight();
+                    if (cb) {
+                        cb();
+                    }
+                };
 
                 if (active === d)
                     return reset();
@@ -130,19 +235,19 @@
                 function transform(p) {
                     //k is the width of the selection we want to end with.
                     var k = height / p[2];
-                    
-                    if(k>=CITY_THRESHOLD && !showCities){
+
+                    if (k >= CITY_THRESHOLD && !showCities) {
                         //Display cities
                         showCities = true;
                         g.selectAll(".city").classed("hidden", false);
-                        
+
                     }
-                    else if(k<CITY_THRESHOLD && showCities){
+                    else if (k < CITY_THRESHOLD && showCities) {
                         //Hide cities
                         showCities = false;
                         g.selectAll(".city").classed("hidden", true);
                     }
-                    
+
                     return "translate(" + (center[0] - p[0] * k) + "," + (center[1] - p[1] * k) + ")scale(" + k + ")";
                 }
             }
@@ -171,7 +276,8 @@
                 transitionList.push(countries[index]);
 
                 var entry = document.createElement("option");
-                entry.text = index;
+                entry.value = index;
+                entry.text = countries[index].properties.name;
                 document.getElementById('pathList').add(entry, null);
             }
 
@@ -200,25 +306,7 @@
             function getSelected(elem) {
                 return elem.options[elem.selectedIndex].value;
             }
-            
-            window.onload = function(){
-                g.selectAll("g").sort(function(a, b){a.order-b.order});
-            }
-        </script>
 
-        <div class = "control">
-            <table>
-                <tr><td>Select a country ID (0-175):</td></tr>
-                <tr><td><input type="number" min="0" max="246" value="0" name="ind" id="ind"></input></td></tr>
-                <tr><td><select id="pathList" size="10"></td></tr>
-                <tr>
-                    <td><input type="Submit" value="Add to Path" onclick="addToPath(document.getElementById('ind').value);"></input></td>
-                    <td><input type="Submit" value="Remove selected from Path" onclick="removeFromPath(getSelected(document.getElementById('pathList')));"></input></td>
-                </tr><tr>
-                    <td><input type="Submit" value="Go to Location" onclick="goToLoc(document.getElementById('ind').value);"></input></td>
-                    <td><input type="Submit" value="Follow Path" onclick="FollowPath(0);"></input></td>
-                </tr>
-            </table>
-        </div>
+        </script>
     </body>
 </html>
