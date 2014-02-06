@@ -1,13 +1,13 @@
 .feature {
     fill: orange;
-    stroke: #333;
-    stroke-width: .5px;
+    stroke: #eee;
+    stroke-width: .2px;
     stroke-linejoin: round;
 }
 
 .feature.active {
     fill: blue;
-    stroke: #333;
+    stroke: #eee;
     stroke-width: .5px;
     stroke-linejoin: round;
 }
@@ -38,8 +38,8 @@
     display: none;
 }
 
-div.items div:not(:target) {display: none}
-div.items div:target {display: block}
+div.items div.tab:not(:target) {display: none}
+div.items div.tab:target {display: block}
 
 .tab{
     font: bold 13px;
@@ -65,4 +65,29 @@ div.items div:target {display: block}
         font-weight: 100;
         font-size: 3px;
         display: none;
+        left: 1em;
+    }
+    
+    .infotable {
+        text-align: center;
+        background-color: #eee;
+        width:100%;
+    }
+    
+    .infotable, .infotable th, .infotable td{
+        border: 1px solid black;
+    }
+    
+    .comment{
+        margin: 3px;
+        border: 1px black solid;
+        background-color: #ccf;
+        font-style: italic;
+    }
+    
+    .commentDivider{
+        background-color: #bef;
+        margin-top: 10px;
+        margin-bottom: 3px;
+        padding: 10px;
     }

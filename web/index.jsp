@@ -13,6 +13,7 @@
         <link rel="stylesheet" type="text/css" href="style.css" media="screen" />
         <script src="http://d3js.org/d3.v3.min.js"></script>
         <script src="http://d3js.org/topojson.v1.js"></script>
+        <script src="http://code.jquery.com/jquery-latest.min.js"></script>
     </head>
     <body>
 
@@ -21,10 +22,10 @@
 
             <p>
                 <a href="#item1" class = "tab">Navigate Countries</a>
-                <a href="#item2" class = "tab">Data</a>
+                <a href="#item2" class = "tab">City Data</a>
 
             <div class="items">
-                <div id="item1"><table>
+                <div id="item1" class="tab"><table>
                         <tr><td>Select a country:</td></tr>
                         <tr><td><select id="countryList"></td></tr>
 
@@ -32,19 +33,38 @@
                         <tr><td><select id="pathList" size="10"></td></tr>
                         <tr>
                             <td><input type="Submit" value="Add to Path" onclick="addToPath(document.getElementById('countryList').value);"></input></td>
-                            <td><input type="Submit" value="Remove selected from Path" onclick="removeFromPath(getSelected(document.getElementById('pathList')));"></input></td>
+                            <td><input type="Submit" value="Remove from Path" onclick="removeFromPath(getSelected(document.getElementById('pathList')));"></input></td>
                         </tr><tr>
                             <td><input type="Submit" value="Follow Path" onclick="FollowPath(0);"></input></td>
                         </tr>
                     </table>
                 </div>
-                <div id="item2">
-                    TODO Data table
+                <div id="item2" class="tab">
+
+                    <table class = "infotable">
+                        <tr><b><td>City Name</td><td id="citytable_name">...</td></b></tr>
+                        <tr><td>Country</td><td id="citytable_country">...</td></tr>
+                        <tr><td>Megacity</td><td id="citytable_mega">...</td></tr>
+                    </table>
+
+                    <div class = "commentDivider">
+                        <div id="comments" class = "commentbox">
+
+                        </div>
+                        <div id="CommentEditor">
+                            <textarea maxlength = "200" placeholder = "Write a new comment..." id="cityInput"></textarea>
+                            <br><br>
+                            
+                            <input type="Submit" value="Submit Comment" id="commentSubmit" disabled="true" onclick="
+                                var name = document.getElementById('citytable_name').innerHTML;
+                                var msg = document.getElementById('cityInput').value;
+                                $.post('comment', {city_name: name, comment: msg});
+                                updateComments(name);
+                                    ">
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <table>
-            </table>
         </div>
 
         <script>
@@ -75,16 +95,17 @@
 
             var g = svg.append("g");
 
+            //Flag to keep track of whether cities are currently being displayed.
             var showCities = false;
 
+            //Array of country and city data
             var countries, cities;
 
-            console.log(path);
-
-
+            //Prepare City data
             d3.json("data/ne_110m_cities.json", function(error, topo) {
 
                 cities = topo.features;
+                //Add city elements
                 g.append("g").attr("order", 0).selectAll("path")
                         .data(cities)
                         .enter().append("path")
@@ -101,6 +122,14 @@
                         .on("mouseout", function(d) {
                             var label = g.select('.' + d.properties.NAME);
                             label.style("display", "none");
+                        })
+                        .on("click", function(d) {
+                            document.getElementById("citytable_name").innerHTML = d.properties.NAME;
+                            document.getElementById("citytable_country").innerHTML = d.properties.SOV0NAME;
+                            document.getElementById("citytable_mega").innerHTML = (d.properties.MEGACITY === 0) ? "No" : "Yes";
+
+                            updateComments(d.properties.NAME);
+                            
                         });
 
                 //Labels
@@ -120,10 +149,12 @@
 
             });
 
+            //Prepare country data
             d3.json("data/ne_110m_topo.json", function(error, topo) {
 
                 countries = topo.features;
 
+                //Add country elements
                 g.insert("g", "g").attr("order", 1).selectAll("path")
                         .data(countries)
                         .enter().append("path")
@@ -252,11 +283,29 @@
                 }
             }
 
+            function updateComments(cityName){
+                //Load comments
+                            
+                            $.get("comment", {city_name: cityName}, function(resp) {
+                                document.getElementById("commentSubmit").disabled = false;
+                                
+                                console.log(resp.messages);
+                                
+                            commentBox = document.getElementById("comments");
+                            commentBox.innerHTML = "";
+                            for (var i = 0; i < resp.messages.length; i++) {
 
+                                cLine = document.createElement("div");
+                                cLine.setAttribute("class", "comment");
+                                cLine.innerHTML = resp.messages[i];
+                                commentBox.appendChild(cLine);
+                            }
+                            });
+            }
 
             function reset() {
                 g.selectAll(".active").classed("active", active = false);
-                g.transition().duration(750).attr("transform", "scale(0.85)");
+                g.transition().duration(750).attr("transform", "scale("+")");
                 start = [width / 2, height / 2, height / 0.85]
                 showCities = false;
                 g.selectAll(".city").classed("hidden", true);
@@ -278,6 +327,7 @@
                 var entry = document.createElement("option");
                 entry.value = index;
                 entry.text = countries[index].properties.name;
+                entry.setAttribute("ondblclick", 'goToLoc('+index+');');
                 document.getElementById('pathList').add(entry, null);
             }
 

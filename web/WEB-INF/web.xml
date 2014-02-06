@@ -5,6 +5,17 @@
             30
         </session-timeout>
     </session-config>
+    
+    <servlet>
+    <servlet-name>Comments</servlet-name>
+    <servlet-class>paz.servlets.LoadComment
+      </servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>Comments</servlet-name>
+    <url-pattern>/comment</url-pattern>
+  </servlet-mapping>
+    
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
