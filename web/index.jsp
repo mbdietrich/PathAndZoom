@@ -54,13 +54,13 @@
                         <div id="CommentEditor">
                             <textarea maxlength = "200" placeholder = "Write a new comment..." id="cityInput"></textarea>
                             <br><br>
-                            
+
                             <input type="Submit" value="Submit Comment" id="commentSubmit" disabled="true" onclick="
-                                var name = document.getElementById('citytable_name').innerHTML;
-                                var msg = document.getElementById('cityInput').value;
-                                $.post('comment', {city_name: name, comment: msg});
-                                updateComments(name);
-                                    ">
+                                    var name = document.getElementById('citytable_name').innerHTML;
+                                    var msg = document.getElementById('cityInput').value;
+                                    $.post('comment', {city_name: name, comment: msg});
+                                    updateComments(name);
+                                   ">
                         </div>
                     </div>
                 </div>
@@ -115,12 +115,12 @@
                             return "city" + i;
                         })
                         .on("mouseover", function(d) {
-                            var label = g.select('.' + d.properties.NAME);
+                            var label = g.select('.' + escapeWhitespace(d.properties.NAME));
                             label.style("display", "block");
 
                         })
                         .on("mouseout", function(d) {
-                            var label = g.select('.' + d.properties.NAME);
+                            var label = g.select('.' + escapeWhitespace(d.properties.NAME));
                             label.style("display", "none");
                         })
                         .on("click", function(d) {
@@ -129,7 +129,7 @@
                             document.getElementById("citytable_mega").innerHTML = (d.properties.MEGACITY === 0) ? "No" : "Yes";
 
                             updateComments(d.properties.NAME);
-                            
+
                         });
 
                 //Labels
@@ -137,7 +137,7 @@
                         .data(cities)
                         .enter().append("text")
                         .attr("class", function(d) {
-                            return "city-label " + d.properties.NAME;
+                            return "city-label " + escapeWhitespace(d.properties.NAME);
                         })
                         .attr("transform", function(d) {
                             return "translate(" + path.centroid(d) + ")";
@@ -166,13 +166,13 @@
                         .on("click", clickCountry)
                         .on("mouseover", function(d) {
                             if (showCities) {
-                                var label = g.select('.' + d.properties.name);
+                                var label = g.select('.' + escapeWhitespace(d.properties.name));
                                 label.style("display", "block");
                             }
 
                         })
                         .on("mouseout", function(d) {
-                            var label = g.select('.' + d.properties.name);
+                            var label = g.select('.' + escapeWhitespace(d.properties.name));
                             label.style("display", "none");
                         });
 
@@ -189,7 +189,7 @@
                         .data(countries)
                         .enter().append("text")
                         .attr("class", function(d) {
-                            return "country-label " + d.properties.name;
+                            return "country-label " + escapeWhitespace(d.properties.name);
                         })
                         .attr("transform", function(d) {
                             return "translate(" + path.centroid(d) + ")";
@@ -208,7 +208,7 @@
             });
 
 
-            var start = [width / 2, height / 2, height / 0.85], end = [width / 2, height / 2, height / 0.85];
+            var start = [width / 2, height / 2, height], end = [width / 2, height / 2, height];
 
             function clickCountry(d) {
                 move(d);
@@ -283,30 +283,30 @@
                 }
             }
 
-            function updateComments(cityName){
+            function updateComments(cityName) {
                 //Load comments
-                            
-                            $.get("comment", {city_name: cityName}, function(resp) {
-                                document.getElementById("commentSubmit").disabled = false;
-                                
-                                console.log(resp.messages);
-                                
-                            commentBox = document.getElementById("comments");
-                            commentBox.innerHTML = "";
-                            for (var i = 0; i < resp.messages.length; i++) {
 
-                                cLine = document.createElement("div");
-                                cLine.setAttribute("class", "comment");
-                                cLine.innerHTML = resp.messages[i];
-                                commentBox.appendChild(cLine);
-                            }
-                            });
+                $.get("comment", {city_name: cityName}, function(resp) {
+                    document.getElementById("commentSubmit").disabled = false;
+
+                    console.log(resp.messages);
+
+                    commentBox = document.getElementById("comments");
+                    commentBox.innerHTML = "";
+                    for (var i = 0; i < resp.messages.length; i++) {
+
+                        cLine = document.createElement("div");
+                        cLine.setAttribute("class", "comment");
+                        cLine.innerHTML = resp.messages[i];
+                        commentBox.appendChild(cLine);
+                    }
+                });
             }
 
             function reset() {
                 g.selectAll(".active").classed("active", active = false);
-                g.transition().duration(750).attr("transform", "scale("+")");
-                start = [width / 2, height / 2, height / 0.85]
+                g.transition().duration(750).attr("transform", "scale(" + ")");
+                start = [width / 2, height / 2, height]
                 showCities = false;
                 g.selectAll(".city").classed("hidden", true);
             }
@@ -327,7 +327,7 @@
                 var entry = document.createElement("option");
                 entry.value = index;
                 entry.text = countries[index].properties.name;
-                entry.setAttribute("ondblclick", 'goToLoc('+index+');');
+                entry.setAttribute("ondblclick", 'goToLoc(' + index + ');');
                 document.getElementById('pathList').add(entry, null);
             }
 
@@ -350,6 +350,20 @@
                         FollowPath(index + 1);
                     });
                 }
+            }
+
+            function escapeWhitespace(str) {
+                function escapeRegExp(x) {
+                    return x.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+                }
+                return str.replace(new RegExp(escapeRegExp(' '), 'g'), '_');
+            }
+            
+            function recreateWhiespace(str){
+                function escapeRegExp(x) {
+                    return x.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+                }
+                return str.replace(new RegExp(escapeRegExp('_'), 'g'), ' ');
             }
 
 
