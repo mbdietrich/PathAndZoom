@@ -91,3 +91,9 @@ div.items div.tab:target {display: block}
         margin-bottom: 3px;
         padding: 10px;
     }
+    .ping{
+        fill: none;
+        stroke: red;
+        stroke-width: 1.5px;
+        stroke-opacity: 1;
+    }

@@ -79,6 +79,10 @@
             var FONT_SCALE = 0.1;
             //How fast we should zoom. Lower numbers zoom faster.
             var ANIMATION_DELAY = 3;
+            //How large the ping effect should be, in proportion to the height of the screen.
+            var PING_SIZE = 0.2;
+            
+            
             var projection = d3.geo.mercator();
             var path = d3.geo.path()
                     .projection(projection)
@@ -287,11 +291,13 @@
             }
 
             function addToPath(index) {
-                transitionList.push(countries[index]);
+                country = countries[index];
+                transitionList.push(country);
                 var entry = document.createElement("option");
                 entry.value = index;
-                entry.text = countries[index].properties.name;
+                entry.text = country.properties.name;
                 entry.setAttribute("ondblclick", 'goToLoc(' + index + ');');
+                entry.setAttribute("onmouseover", 'ping('+index+')')
                 document.getElementById('pathList').add(entry, null);
             }
 
@@ -329,7 +335,9 @@
 
 
             //Pings a country on the scren
-            function ping(source) {
+            function ping(index) {
+                
+                var source = countries[index];
 
                 var center = path.centroid(source);
                 var screenvars = getRealBounds();
@@ -338,11 +346,44 @@
                 var ydist = Math.abs(center[1] - screenvars[0][1]);
 
                 var startR = 0;
-
+                
                 //Only adjust radius if the target is off the map
-                if (xdist > (screenvars[1][0] / 2) || ydist > (screenvars[0][1] / 2)) {
-                    //todo
+                if ((xdist) > (screenvars[1][0] / 2) || (ydist) > (screenvars[1][1] / 2)) {
+                    if (xdist === 0) {
+                        //Perfectly vertical alignment
+                        startR = ydist - (screenvars[1][1] / 2);
+                    }
+                    else if(ydist===0){
+                        //Perfectly horizontal alignment
+                        startR = xdist - (screenvars[1][0] / 2);
+                    }
+                    else {
+
+                        var xdy = (xdist / ydist);
+                        var screenRatio = width/height;
+                        var scaleVar = ((xdy)>=screenRatio) ? (xdist/screenvars[1][0]) : (ydist/screenvars[1][1]);
+                        var dist = Math.sqrt(xdist*xdist + ydist*ydist);
+                        
+                        startR = dist/scaleVar;
+                    }
+
                 }
+                
+                var endR = startR + screenvars[1][1]*PING_SIZE;
+                
+                //TODO render circles
+                g.append("circle")
+                        .attr("class", "ping")
+                        .attr("cx", center[0])
+                        .attr("cy", center[1])
+                        .attr("r", startR)
+                        .transition()
+                        .duration(750)
+                        .style("stroke-opacity", 0.25)
+                        .attr("r", endR)
+                        .each("end", function(){
+                            g.select(".ping").remove();
+                });
             }
 
             //Convert the screen coords into data coords
