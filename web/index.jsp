@@ -71,36 +71,25 @@
             var width = 800,
                     height = 640,
                     active;
-
             //Zoom threshold after which to display features
             var CITY_THRESHOLD = 5;
-
             //How far we should scale into a selection
-            var SCALE_FACTOR = 1600;
-
+            var SCALE_FACTOR = 1200;
             //Scale factor of fonts
             var FONT_SCALE = 0.1;
-
             //How fast we should zoom. Lower numbers zoom faster.
             var ANIMATION_DELAY = 3;
-
             var projection = d3.geo.mercator();
-
             var path = d3.geo.path()
                     .projection(projection)
                     .pointRadius(0.5);
-
             var svg = d3.select("body").append("svg")
                     .attr("class", "map");
-
             var g = svg.append("g");
-
             //Flag to keep track of whether cities are currently being displayed.
             var showCities = false;
-
             //Array of country and city data
             var countries, cities;
-
             //Prepare City data
             d3.json("data/ne_110m_cities.json", function(error, topo) {
 
@@ -117,7 +106,6 @@
                         .on("mouseover", function(d) {
                             var label = g.select('.' + escapeWhitespace(d.properties.NAME));
                             label.style("display", "block");
-
                         })
                         .on("mouseout", function(d) {
                             var label = g.select('.' + escapeWhitespace(d.properties.NAME));
@@ -127,11 +115,8 @@
                             document.getElementById("citytable_name").innerHTML = d.properties.NAME;
                             document.getElementById("citytable_country").innerHTML = d.properties.SOV0NAME;
                             document.getElementById("citytable_mega").innerHTML = (d.properties.MEGACITY === 0) ? "No" : "Yes";
-
                             updateComments(d.properties.NAME);
-
                         });
-
                 //Labels
                 g.selectAll(".city-label")
                         .data(cities)
@@ -146,14 +131,11 @@
                         .text(function(d) {
                             return d.properties.NAME;
                         });
-
             });
-
             //Prepare country data
             d3.json("data/ne_110m_topo.json", function(error, topo) {
 
                 countries = topo.features;
-
                 //Add country elements
                 g.insert("g", "g").attr("order", 1).selectAll("path")
                         .data(countries)
@@ -175,7 +157,6 @@
                             var label = g.select('.' + escapeWhitespace(d.properties.name));
                             label.style("display", "none");
                         });
-
                 //Populate country selector
                 for (var i = 0; i < countries.length; i++) {
                     var entry = document.createElement("option");
@@ -206,10 +187,7 @@
                             return d.properties.name;
                         });
             });
-
-
             var start = [width / 2, height / 2, height], end = [width / 2, height / 2, height];
-
             function clickCountry(d) {
                 move(d);
             }
@@ -222,35 +200,31 @@
                         cb();
                     }
                 };
-
                 if (active === d)
                     return reset();
-
                 var b = path.bounds(d);
-                var center = projection.translate();
                 var x = (((b[1][0] + b[0][0]) / 2)),
                         y = (((b[1][1] + b[0][1]) / 2)),
                         scale = SCALE_FACTOR / Math.max(width / (b[1][0] - b[0][0]), height / (b[1][1] - b[0][1]));
-
                 end[0] = x;
                 end[1] = y;
                 end[2] = scale;
 
+                sb = getRealBounds();
+                start = [sb[0][0], sb[0][1], height / d3.transform(g.attr("transform")).scale[0]];
+
+
+//TODO fix starting point
                 var center = [width / 2, height / 2],
                         i = d3.interpolateZoom(start, end);
-
-                console.log("Duration: " + i.duration);
-
-
                 function highlight() {
                     g.selectAll(".active").classed("active", false);
                     active = d;
                     g.selectAll("#topo" + countries.indexOf(d)).classed("active", true);
-                    console.log(countries.indexOf(d));
                 }
 
-                g.attr("transform", transform(start))
-                        .transition()
+
+                g.transition()
                         .delay(250)
                         .duration(i.duration * ANIMATION_DELAY)
                         .attrTween("transform", function() {
@@ -260,18 +234,13 @@
                         })
                         .each("end", callback);
                 start = [x, y, scale];
-
-
-
                 function transform(p) {
                     //k is the width of the selection we want to end with.
                     var k = height / p[2];
-
                     if (k >= CITY_THRESHOLD && !showCities) {
                         //Display cities
                         showCities = true;
                         g.selectAll(".city").classed("hidden", false);
-
                     }
                     else if (k < CITY_THRESHOLD && showCities) {
                         //Hide cities
@@ -288,9 +257,6 @@
 
                 $.get("comment", {city_name: cityName}, function(resp) {
                     document.getElementById("commentSubmit").disabled = false;
-
-                    console.log(resp.messages);
-
                     commentBox = document.getElementById("comments");
                     commentBox.innerHTML = "";
                     for (var i = 0; i < resp.messages.length; i++) {
@@ -316,14 +282,12 @@
             }
 
             var transitionList = [];
-
             function clearPath() {
                 transitionList.length = 0;
             }
 
             function addToPath(index) {
                 transitionList.push(countries[index]);
-
                 var entry = document.createElement("option");
                 entry.value = index;
                 entry.text = countries[index].properties.name;
@@ -344,7 +308,6 @@
             }
 
             function FollowPath(index) {
-                console.log("Now moving to Country #" + countries.indexOf(transitionList[index]));
                 if (transitionList.length > index) {
                     move(transitionList[index], function() {
                         FollowPath(index + 1);
@@ -358,17 +321,45 @@
                 }
                 return str.replace(new RegExp(escapeRegExp(' '), 'g'), '_');
             }
-            
-            function recreateWhiespace(str){
-                function escapeRegExp(x) {
-                    return x.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
-                }
-                return str.replace(new RegExp(escapeRegExp('_'), 'g'), ' ');
-            }
 
 
             function getSelected(elem) {
                 return elem.options[elem.selectedIndex].value;
+            }
+
+
+            //Pings a country on the scren
+            function ping(source) {
+
+                var center = path.centroid(source);
+                var screenvars = getRealBounds();
+
+                var xdist = Math.abs(center[0] - screenvars[0][0]);
+                var ydist = Math.abs(center[1] - screenvars[0][1]);
+
+                var startR = 0;
+
+                //Only adjust radius if the target is off the map
+                if (xdist > (screenvars[1][0] / 2) || ydist > (screenvars[0][1] / 2)) {
+                    //todo
+                }
+            }
+
+            //Convert the screen coords into data coords
+            function getRealBounds() {
+                var transforms = d3.transform(g.attr("transform"));
+
+                var tx = transforms.translate[0];
+                var ty = transforms.translate[1];
+                var sc = height / transforms.scale[0];
+
+                var xcenter = ((width / 2) - tx) / transforms.scale[0];
+                var ycenter = ((height / 2) - ty) / transforms.scale[0];
+
+                var xspan = width * sc / SCALE_FACTOR;
+                var yspan = height * sc / SCALE_FACTOR;
+
+                return [[xcenter, ycenter], [xspan, yspan]];
             }
 
         </script>
