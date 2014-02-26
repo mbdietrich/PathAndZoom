@@ -68,9 +68,7 @@
         </div>
 
         <script>
-            var width = 800,
-                    height = 640,
-                    active;
+            var active;
             //Zoom threshold after which to display features
             var CITY_THRESHOLD = 5;
             //How far we should scale into a selection
@@ -88,8 +86,13 @@
                     .projection(projection)
                     .pointRadius(0.5);
             var svg = d3.select("body").append("svg")
-                    .attr("class", "map");
-            var g = svg.append("g");
+                    .attr("class", "map")
+                    .attr("onresize", 'width = $(".map").width(),height = $(".map").height();');
+            
+            var width = $(".map").width(),
+                    height = $(".map").height();
+            
+            var g = svg.append("g")
             //Flag to keep track of whether cities are currently being displayed.
             var showCities = false;
             //Array of country and city data
@@ -340,7 +343,7 @@
                 var source = countries[index];
 
                 var center = path.centroid(source);
-                var screenvars = getRealBounds();
+                var screenvars = getAbsoluteBounds();
 
                 var xdist = Math.abs(center[0] - screenvars[0][0]);
                 var ydist = Math.abs(center[1] - screenvars[0][1]);
@@ -348,20 +351,20 @@
                 var startR = 0;
                 
                 //Only adjust radius if the target is off the map
-                if ((xdist) > (screenvars[1][0] / 2) || (ydist) > (screenvars[1][1] / 2)) {
+                if ((xdist) > (screenvars[1][0]) || (ydist) > (screenvars[1][1])) {
                     if (xdist === 0) {
                         //Perfectly vertical alignment
-                        startR = ydist - (screenvars[1][1] / 2);
+                        startR = ydist - (screenvars[1][1]);
                     }
                     else if(ydist===0){
                         //Perfectly horizontal alignment
-                        startR = xdist - (screenvars[1][0] / 2);
+                        startR = xdist - (screenvars[1][0]);
                     }
                     else {
 
                         var xdy = (xdist / ydist);
                         var screenRatio = width/height;
-                        var scaleVar = ((xdy)>=screenRatio) ? (xdist/screenvars[1][0]) : (ydist/screenvars[1][1]);
+                        var scaleVar = ((xdy)>=screenRatio) ? (xdist/(Math.abs(xdist-screenvars[1][0]))) : (ydist/(Math.abs(ydist-screenvars[1][1])));
                         var dist = Math.sqrt(xdist*xdist + ydist*ydist);
                         
                         startR = dist/scaleVar;
@@ -392,7 +395,7 @@
 
                 var tx = transforms.translate[0];
                 var ty = transforms.translate[1];
-                var sc = height / transforms.scale[0];
+                var sc = height / transforms.scale[1];
 
                 var xcenter = ((width / 2) - tx) / transforms.scale[0];
                 var ycenter = ((height / 2) - ty) / transforms.scale[0];
@@ -401,6 +404,20 @@
                 var yspan = height * sc / SCALE_FACTOR;
 
                 return [[xcenter, ycenter], [xspan, yspan]];
+            }
+            
+            
+            //Convert 
+            function getAbsoluteBounds(){
+                var transforms = d3.transform(g.attr("transform"));
+
+                var tx = transforms.translate[0];
+                var ty = transforms.translate[1];
+
+                var xcenter = ((width / 2) - tx) / transforms.scale[0];
+                var ycenter = ((height / 2) - ty) / transforms.scale[0];
+                
+                return [[xcenter, ycenter], [(width/2)/transforms.scale[1], (height/2)/transforms.scale[1]]];
             }
 
         </script>
