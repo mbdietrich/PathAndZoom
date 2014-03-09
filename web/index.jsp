@@ -44,7 +44,7 @@
                     <table class = "infotable">
                         <tr><b><td>City Name</td><td id="citytable_name">...</td></b></tr>
                         <tr><td>Country</td><td id="citytable_country">...</td></tr>
-                        <tr><td>Megacity</td><td id="citytable_mega">...</td></tr>
+                        <tr><td>Megacity?</td><td id="citytable_mega">...</td></tr>
                     </table>
 
                     <div class = "commentDivider">
@@ -79,8 +79,8 @@
             var ANIMATION_DELAY = 3;
             //How large the ping effect should be, in proportion to the height of the screen.
             var PING_SIZE = 0.2;
-            
-            
+
+
             var projection = d3.geo.mercator();
             var path = d3.geo.path()
                     .projection(projection)
@@ -88,16 +88,23 @@
             var svg = d3.select("body").append("svg")
                     .attr("class", "map")
                     .attr("onresize", 'width = $(".map").width(),height = $(".map").height();');
-            
+
             var width = $(".map").width(),
                     height = $(".map").height();
-            
+
             var g = svg.append("g")
             //Flag to keep track of whether cities are currently being displayed.
             var showCities = false;
             //Array of country and city data
             var countries, cities;
             //Prepare City data
+
+            var zoom = d3.behavior.zoom()
+                    .scaleExtent([1, 100])        
+            .on("zoom", function(){
+                    g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale +")");
+            });
+
             d3.json("data/ne_110m_cities.json", function(error, topo) {
 
                 cities = topo.features;
@@ -137,7 +144,7 @@
                         .attr("dy", "0.35em")
                         .text(function(d) {
                             return d.properties.NAME;
-                        });
+                        })
             });
             //Prepare country data
             d3.json("data/ne_110m_topo.json", function(error, topo) {
@@ -193,6 +200,8 @@
                         .text(function(d) {
                             return d.properties.name;
                         });
+                        
+                        svg.call(zoom);
             });
             var start = [width / 2, height / 2, height], end = [width / 2, height / 2, height];
             function clickCountry(d) {
@@ -300,7 +309,7 @@
                 entry.value = index;
                 entry.text = country.properties.name;
                 entry.setAttribute("ondblclick", 'goToLoc(' + index + ');');
-                entry.setAttribute("onmouseover", 'ping('+index+')')
+                entry.setAttribute("onmouseover", 'ping(' + index + ')')
                 document.getElementById('pathList').add(entry, null);
             }
 
@@ -339,7 +348,7 @@
 
             //Pings a country on the scren
             function ping(index) {
-                
+
                 var source = countries[index];
 
                 var center = path.centroid(source);
@@ -349,31 +358,31 @@
                 var ydist = Math.abs(center[1] - screenvars[0][1]);
 
                 var startR = 0;
-                
+
                 //Only adjust radius if the target is off the map
                 if ((xdist) > (screenvars[1][0]) || (ydist) > (screenvars[1][1])) {
                     if (xdist === 0) {
                         //Perfectly vertical alignment
                         startR = ydist - (screenvars[1][1]);
                     }
-                    else if(ydist===0){
+                    else if (ydist === 0) {
                         //Perfectly horizontal alignment
                         startR = xdist - (screenvars[1][0]);
                     }
                     else {
 
                         var xdy = (xdist / ydist);
-                        var screenRatio = width/height;
-                        var scaleVar = ((xdy)>=screenRatio) ? (xdist/(Math.abs(xdist-screenvars[1][0]))) : (ydist/(Math.abs(ydist-screenvars[1][1])));
-                        var dist = Math.sqrt(xdist*xdist + ydist*ydist);
-                        
-                        startR = dist/scaleVar;
+                        var screenRatio = width / height;
+                        var scaleVar = ((xdy) >= screenRatio) ? (xdist / (Math.abs(xdist - screenvars[1][0]))) : (ydist / (Math.abs(ydist - screenvars[1][1])));
+                        var dist = Math.sqrt(xdist * xdist + ydist * ydist);
+
+                        startR = dist / scaleVar;
                     }
 
                 }
-                
-                var endR = startR + screenvars[1][1]*PING_SIZE;
-                
+
+                var endR = startR + screenvars[1][1] * PING_SIZE;
+
                 //TODO render circles
                 g.append("circle")
                         .attr("class", "ping")
@@ -384,9 +393,9 @@
                         .duration(750)
                         .style("stroke-opacity", 0.25)
                         .attr("r", endR)
-                        .each("end", function(){
+                        .each("end", function() {
                             g.select(".ping").remove();
-                });
+                        });
             }
 
             //Convert the screen coords into data coords
@@ -404,11 +413,12 @@
                 var yspan = height * sc / SCALE_FACTOR;
 
                 return [[xcenter, ycenter], [xspan, yspan]];
+
             }
-            
-            
+
+
             //Convert 
-            function getAbsoluteBounds(){
+            function getAbsoluteBounds() {
                 var transforms = d3.transform(g.attr("transform"));
 
                 var tx = transforms.translate[0];
@@ -416,8 +426,8 @@
 
                 var xcenter = ((width / 2) - tx) / transforms.scale[0];
                 var ycenter = ((height / 2) - ty) / transforms.scale[0];
-                
-                return [[xcenter, ycenter], [(width/2)/transforms.scale[1], (height/2)/transforms.scale[1]]];
+
+                return [[xcenter, ycenter], [(width / 2) / transforms.scale[1], (height / 2) / transforms.scale[1]]];
             }
 
         </script>
