@@ -11,9 +11,9 @@
         <meta charset="utf-8">
         <title>D3 Test</title>
         <link rel="stylesheet" type="text/css" href="style.css" media="screen" />
-        <script src="http://d3js.org/d3.v3.min.js"></script>
-        <script src="http://d3js.org/topojson.v1.js"></script>
-        <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+        <script src="lib/d3_local.js"></script>
+        <script src="lib/topojson_local.js"></script>
+        <script src="lib/jquery_local.js"></script>
     </head>
     <body>
 
